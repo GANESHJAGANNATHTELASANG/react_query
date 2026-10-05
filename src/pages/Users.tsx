@@ -1,4 +1,9 @@
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import {
+  useQuery,
+  useQueryClient,
+  useMutation,
+  keepPreviousData,
+} from "@tanstack/react-query";
 
 import {
   getUsers,
@@ -16,11 +21,12 @@ function Users() {
 
   const queryClient = useQueryClient();
 
-  const { data, isPending, error, refetch } = useQuery({
+  const { data, isPending, error, refetch, isPlaceholderData } = useQuery({
     queryKey: ["users", page],
     queryFn: () => getUsers(page),
     staleTime: 10 * 1000,
     gcTime: 30 * 1000,
+    placeholderData: keepPreviousData,
   });
 
   const mutate = useMutation({
@@ -159,9 +165,10 @@ function Users() {
 
         <button
           onClick={() => setPage((page) => page + 1)}
-          className="rounded bg-green-500 px-4 py-2 text-white"
+          disabled={isPlaceholderData}
+          className="rounded bg-green-500 px-4 py-2 text-white disabled:opacity-50"
         >
-          Next
+          {isPlaceholderData ? "Loading..." : "Next"}
         </button>
       </div>
 

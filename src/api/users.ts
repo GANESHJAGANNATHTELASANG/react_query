@@ -1,13 +1,16 @@
-export const getUsers = async () => {
-  const response = await fetch("https://dummyjson.com/users");
+export const getUsers = async (page: number) => {
+  const limit = 10;
+  const skip = (page - 1) * limit;
+
+  const response = await fetch(
+    `https://dummyjson.com/users?limit=${limit}&skip=${skip}`,
+  );
 
   if (!response.ok) {
     throw new Error("Failed to fetch users");
   }
 
-  const data = await response.json();
-
-  return data;
+  return response.json();
 };
 
 export const createUser = async (user: {
