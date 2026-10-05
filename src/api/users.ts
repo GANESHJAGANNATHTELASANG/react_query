@@ -64,3 +64,25 @@ export const deleteUser = async (id: number) => {
 
   return response.json();
 };
+
+// src/api/users.ts
+
+export const getUser = async (id: number) => {
+  const response = await fetch(`https://dummyjson.com/users/${id}`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch user");
+  }
+
+  return response.json();
+};
+
+export const getUserPosts = async (userId: number) => {
+  const response = await fetch(`https://dummyjson.com/posts/user/${userId}`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch user posts");
+  }
+
+  return response.json();
+};
