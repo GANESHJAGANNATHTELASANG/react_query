@@ -1,9 +1,17 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 
-import { getUsers, createUser, updateUser } from "../api/users";
+import { getUsers, createUser, updateUser, deleteUser } from "../api/users";
 
 function Users() {
   const queryClient = useQueryClient();
+
+  const { isPending, error, refetch } = useQuery({
+    queryKey: ["users"],
+    queryFn: getUsers,
+    staleTime: 10 * 1000,
+    gcTime: 30 * 1000,
+  });
+
   const mutate = useMutation({
     mutationFn: createUser,
     onSuccess: () => {
@@ -34,15 +42,31 @@ function Users() {
     },
   });
 
-  const { isPending, error, refetch } = useQuery({
-    queryKey: ["users"],
-    queryFn: getUsers,
-    staleTime: 10 * 1000,
-    gcTime: 30 * 1000,
+  const mutateDelete = useMutation({
+    mutationFn: deleteUser,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["users"],
+      });
+    },
+
+    onError: (error) => {
+      alert("Failed to update user: " + (error as Error).message);
+    },
+
+    onSettled: () => {
+      console.log("at the end of the mutation, either success or error");
+    },
   });
+
+  const handleDeleteClick = () => {
+    mutateDelete.mutate(1);
+  };
 
   const cachedUsers = queryClient.getQueryData(["users"]);
   console.log("Cached users:", cachedUsers);
+
   if (isPending) {
     return <h1>Loading users...</h1>;
   }
@@ -98,6 +122,7 @@ function Users() {
       {mutate.isSuccess && <p>User created successfully ✅</p>}
 
       {mutate.isError && <p>Failed to create user ❌</p>}
+
       <div className="mt-4">
         <button
           onClick={handleUpdateClick}
@@ -110,6 +135,20 @@ function Users() {
         {mutateUpdate.isSuccess && <p>User updated successfully ✅</p>}
 
         {mutateUpdate.isError && <p>Failed to update user ❌</p>}
+      </div>
+
+      <div className="mt-4">
+        <button
+          onClick={handleDeleteClick}
+          className="mt-4 rounded bg-red-500 px-4 py-2 text-white"
+          disabled={mutate.isPending}
+        >
+          {mutateDelete.isPending ? " Deleting user..." : " delete user"}
+        </button>
+
+        {mutateDelete.isSuccess && <p>User deleted successfully ✅</p>}
+
+        {mutateDelete.isError && <p>Failed to delete user ❌</p>}
       </div>
     </div>
   );
