@@ -1,6 +1,13 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 
-import { getUsers, createUser, updateUser, deleteUser } from "../api/users";
+import {
+  getUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  getUser,
+  getUserPosts,
+} from "../api/users";
 
 function Users() {
   const queryClient = useQueryClient();
@@ -52,7 +59,7 @@ function Users() {
     },
 
     onError: (error) => {
-      alert("Failed to update user: " + (error as Error).message);
+      alert("Failed to delete user: " + (error as Error).message);
     },
 
     onSettled: () => {
@@ -67,14 +74,6 @@ function Users() {
   const cachedUsers = queryClient.getQueryData(["users"]);
   console.log("Cached users:", cachedUsers);
 
-  if (isPending) {
-    return <h1>Loading users...</h1>;
-  }
-
-  if (error) {
-    return <h1>Failed to load users</h1>;
-  }
-
   const handleclick = () => {
     mutate.mutate({
       firstName: "john",
@@ -88,6 +87,35 @@ function Users() {
       firstName: "UpdatedFirstName",
     });
   };
+
+  const userId = 1;
+
+  const { data: user, isPending: userLoading } = useQuery({
+    queryKey: ["user", userId],
+    queryFn: () => getUser(userId),
+  });
+
+  const { data: posts, isPending: postsLoading } = useQuery({
+    queryKey: ["user-posts", user?.id],
+    queryFn: () => getUserPosts(user.id),
+    enabled: !!user?.id,
+  });
+
+  // -----------------------------
+  // Conditional returns AFTER hooks
+  // -----------------------------
+
+  if (isPending) {
+    return <h1>Loading users...</h1>;
+  }
+
+  if (error) {
+    return <h1>Failed to load users</h1>;
+  }
+
+  if (userLoading) {
+    return <h1>Loading user...</h1>;
+  }
 
   return (
     <div>
@@ -116,7 +144,7 @@ function Users() {
         className="mt-4 rounded bg-green-500 px-4 py-2 text-white"
         disabled={mutate.isPending}
       >
-        {mutate.isPending ? " Creating user..." : " create user"}
+        {mutate.isPending ? "Creating user..." : "create user"}
       </button>
 
       {mutate.isSuccess && <p>User created successfully ✅</p>}
@@ -127,9 +155,9 @@ function Users() {
         <button
           onClick={handleUpdateClick}
           className="mt-4 rounded bg-green-500 px-4 py-2 text-white"
-          disabled={mutate.isPending}
+          disabled={mutateUpdate.isPending}
         >
-          {mutateUpdate.isPending ? " Updating user..." : " update user"}
+          {mutateUpdate.isPending ? "Updating user..." : "update user"}
         </button>
 
         {mutateUpdate.isSuccess && <p>User updated successfully ✅</p>}
@@ -141,14 +169,30 @@ function Users() {
         <button
           onClick={handleDeleteClick}
           className="mt-4 rounded bg-red-500 px-4 py-2 text-white"
-          disabled={mutate.isPending}
+          disabled={mutateDelete.isPending}
         >
-          {mutateDelete.isPending ? " Deleting user..." : " delete user"}
+          {mutateDelete.isPending ? "Deleting user..." : "delete user"}
         </button>
 
         {mutateDelete.isSuccess && <p>User deleted successfully ✅</p>}
 
         {mutateDelete.isError && <p>Failed to delete user ❌</p>}
+      </div>
+
+      <div>
+        <h1>User: {user.firstName}</h1>
+
+        {postsLoading ? (
+          <h2>Loading posts...</h2>
+        ) : (
+          <div>
+            <h2>Posts:</h2>
+
+            {posts.posts.map((post: any) => (
+              <p key={post.id}>{post.title}</p>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
